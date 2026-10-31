@@ -3,7 +3,7 @@ name: Build Android APK from Vite Project
 on:
   push:
     branches:
-      - main  # यदि रिपॉजिटरी में 'master' है, तो इसे master कर दें
+      - main  # अगर आपकी मुख्य ब्रांच का नाम master है, तो यहाँ master लिखें
 
 jobs:
   build:
@@ -30,12 +30,21 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Pre-build Android Wrapper (Fix missing directory error)
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        packages: 'platform-tools'
+
+    - name: Force Initialize Capacitor Configuration & Platform
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev
-        npx cap init "Tax App" "com.taxcompliance.app" --web-dir=dist --confirm || true
         
-        # यदि रिपॉजिटरी में पहले से android फोल्डर नहीं है, तो उसे फ्रेश जनरेट करें
+        # अगर कॉन्फ़िगरेशन फ़ाइल नहीं है, तो एक बेसिक JSON फ़ाइल खुद बनाएं
+        if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+          echo '{"appId": "com.taxcompliance.app", "appName": "Tax App", "webDir": "dist"}' > capacitor.config.json
+        fi
+        
+        # यदि रिपॉजिटरी में पहले से android फ़ोल्डर नहीं है, तो उसे फ्रेश जनरेट करें
         if [ ! -d "android" ]; then
           npx cap add android
         fi
@@ -43,7 +52,7 @@ jobs:
     - name: Sync Web Files to Android Folder
       run: npx cap sync android
 
-    - name: Set Android Permissions & Build Debug APK
+    - name: Build Debug APK with Gradle Wrapper
       run: |
         cd android
         chmod +x gradlew
@@ -54,4 +63,3 @@ jobs:
       with:
         name: official-tax-app-apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
-        
