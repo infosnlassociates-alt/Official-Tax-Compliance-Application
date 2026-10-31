@@ -3,7 +3,7 @@ name: Build Android APK from Vite Project
 on:
   push:
     branches:
-      - main  # अगर आपकी मुख्य ब्रांच का नाम master है, तो यहाँ master लिखें
+      - main  # यदि रिपॉजिटरी में 'master' है, तो इसे master कर दें
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js (Latest Stable)
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
@@ -21,7 +21,7 @@ jobs:
     - name: Install Dependencies
       run: npm install --legacy-peer-deps
 
-    - name: Build Vite Web Project
+    - name: Build Vite Project
       run: npm run build
 
     - name: Setup Java JDK 17
@@ -30,29 +30,28 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Setup Android SDK & Automatically Accept Licenses
-      uses: android-actions/setup-android@v4
-      with:
-        packages: 'platform-tools build-tools;34.0.0' # 2026 के अनुसार लेटेस्ट बिल्ड टूल्स और प्लेटफॉर्म टूल्स
-        # यह प्लगइन अब बैकग्राउंड में ऑटोमैटिकली सभी लाइसेंस को 'YES' कर देता है
-
-    - name: Initialize Capacitor Android
+    - name: Pre-build Android Wrapper (Fix missing directory error)
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev
-        npx cap init "Tax App" "com.taxcompliance.app" --web-dir=dist --confirm
-        npx cap add android
+        npx cap init "Tax App" "com.taxcompliance.app" --web-dir=dist --confirm || true
+        
+        # यदि रिपॉजिटरी में पहले से android फोल्डर नहीं है, तो उसे फ्रेश जनरेट करें
+        if [ ! -d "android" ]; then
+          npx cap add android
+        fi
 
-    - name: Sync Web Code to Android
+    - name: Sync Web Files to Android Folder
       run: npx cap sync android
 
-    - name: Build Debug APK with Gradle
+    - name: Set Android Permissions & Build Debug APK
       run: |
         cd android
         chmod +x gradlew
         ./gradlew assembleDebug
 
-    - name: Upload Test APK
+    - name: Upload Finished APK
       uses: actions/upload-artifact@v4
       with:
         name: official-tax-app-apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
+        
