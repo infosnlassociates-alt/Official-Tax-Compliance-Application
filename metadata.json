@@ -1,0 +1,8 @@
+{
+  "name": "Shree Navya Lekha Associates - Tax Compliance & Reminders",
+  "description": "Official Tax Compliance & Reminders portal for Shree Navya Lekha Associates. GST, ITR & TDS tracking, late fee calculator, client payment ledger, offline credential vault, and WhatsApp support (9549899145).",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
